@@ -11,8 +11,10 @@ failed="${RED}Installation failed$NC"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h|--help) help="$2"; shift ;;
-        --rsyslog-client) logclient="$2"; shift ;;
         --rsyslog-server) logserver="$2"; shift ;;
+        --client-key) clientkey="$2"; shift ;;
+        --client-cert) clientcert="$2"; shift ;;
+        --ca-cert) cacert="$2"; shift ;;
         --log-user) loguser="$2"; shift ;;
         --web) webconf="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -23,11 +25,16 @@ done
 if ! [ -z ${help+x} ]; then
     echo "Usage: [--rsyslog-client 0.0.0.0 OR --rsyslog-server + --log-user USERNAME]"
     echo ""
-    echo "  --rsyslog-client [IPv4]    Configures the device as a log sending client + Enter the rsyslog-server ipv4 (mandatory)"
-    echo "  --rsyslog-server           Configures the device as a log receiving server (mandatory)"
-    echo "  --log-user                 Username of the user who is allowed to view the logs (mandatory)"
+    echo "  --rsyslog-server [IPv4]    Configures the device as a log sending client + Enter the rsyslog-server ipv4 (mandatory)"
+    echo "  --client-key               Filename of the client keyfile. Same folder as script (mandatory if --rsyslog-server is set)"
+    echo "  --client-cert              Filename of the client certfile. Same folder as script (mandatory if --rsyslog-server is set)"
+    echo "  --ca-cert                  Filename of the CA certfile. Same folder as script (mandatory if --rsyslog-server is set)"
+    echo "  --log-user                 Username of the user who is allowed to view the logs (mandatory if --rsyslog-server is set)"
     echo "  --web                      Configures the firewall to allow *80 *443 (optional)"
     echo "  -h or --help               help (this output)"
+    echo ""
+    echo "Client certificates must be requested from the administrator"
+    echo ""
     exit 0 
 fi
 
@@ -164,7 +171,9 @@ set_in_file "install dccp /bin/true" "/etc/modprobe.d/nodccp"
 install_if_missing "ufw"
 run_sudo_silent "ufw default deny incoming" "UFW deny incoming"
 run_sudo_silent "ufw default allow outgoing" "UFW allow outgoing"
-run_sudo_silent "ufw allow 50514/tcp" "Enable 50514/tcp"
+if ! [ -z ${logserver+x} ]; then
+    run_sudo_silent "ufw allow 6514/tcp" "Enable 6514/tcp"
+fi
 run_sudo_silent "ufw allow 1461/tcp" "Enable 1461/tcp"
 if ! [ -z ${webconf+x} ]; then
     run_sudo_silent "ufw allow 80/tcp" "Enable 80/tcp"
@@ -176,21 +185,19 @@ run_sudo_silent "echo 'y' | ufw enable" "Enable firewall"
 run_sudo_silent "service ufw restart" "Restart firewall"
 
 ########## Remote Logs ##########
-install_if_missing "rsyslog"
-run_sudo_silent "cp /etc/rsyslog.conf /etc/rsyslog_original.config" "Config backup"
-if ! [ -z ${logclient+x} ]; then
+if ! [ -z ${logserver+x} ]; then
+    install_if_missing "rsyslog"
+    run_sudo_silent "cp /etc/rsyslog.conf /etc/rsyslog_original.config" "Config backup"
     run_sudo_silent "touch /etc/rsyslog.d/laurel.conf" "Create custom config"
     set_in_file "module(load=\"imfile\")\ninput(type=\"imfile\" File=\"/var/log/laurel/audit*.log\" Tag=\"\" ruleset=\"remote\")\nruleset(name=\"remote\"){\n
-    action(type=\"omfwd\" target=\"${logclient}\" port=\"50514\" protocol=\"tcp\")}" "/etc/rsyslog.d/laurel.conf"
-    done_action "Configure ${logclient} as logging target"
-else
-    set_in_file "module(load=\"imtcp\")\ninput(type=\"imtcp\" port=\"50514\")" "/etc/rsyslog.conf"
-    set_in_file "\$template remote-incoming-logs, \"/var/log/remote/%HOSTNAME%.log\"\n*.* ?remote-incoming-logs" "/etc/rsyslog.conf"
-    done_action "Configure rsyslog"
+    action(type=\"omfwd\" target=\"${logserver}\" port=\"6514\" protocol=\"tcp\"\nStreamDriver=\"gtls\" StreamDriverMode=\"1\" StreamDriverAuthMode=\"anon\")}" "/etc/rsyslog.d/laurel.conf"
+    done_action "Configure ${logserver} as logging target"
+    set_in_file "\$DefaultNetstreamDriver gtls\n\$DefaultNetstreamDriverCAFile /etc/rsyslog-keys/nerd_force1_UG_CA.pem\n\$DefaultNetstreamDriverCertFile /etc/rsyslog-keys/client-cert.pem\n
+    \$DefaultNetstreamDriverKeyFile /etc/rsyslog-keys/client-key.pem\n\$ActionSendStreamDriverMode 1\n\$ActionSendStreamDriverAuthMode anon" "/etc/rsyslog.conf"
+    done_action "Configure rsyslog TLS"
+    run_sudo_silent "systemctl enable --now rsyslog" "Enable rsyslog"
+    run_sudo_silent "systemctl restart rsyslog" "Restart rsyslog"
 fi
-run_sudo_silent "systemctl enable --now rsyslog" "Enable rsyslog"
-run_sudo_silent "systemctl restart rsyslog" "Restart rsyslog"
-
 ########## Final Changes ##########
 install_if_missing "apt-listbugs"
 done_action "rebooting system now"
