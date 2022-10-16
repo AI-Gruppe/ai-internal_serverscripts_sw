@@ -25,7 +25,7 @@ fi
 }
 
 run_sudo_silent() { #(Command, Message)
-    bash -c "sudo $1" > /dev/null;
+    bash -c "sudo $1" > /dev/null 2>&1;
     printf '%-20s %s\n' "$cdone" "$2" 
 }
 
@@ -37,16 +37,19 @@ done_action(){
         printf '%-20s %s\n' "$cdone" "$1" 
 }
 
+run_sudo_silent "apt-get update && sudo apt-get install docker-scan-plugin" "Install docker vuln-scan"
 run_sudo_silent "systemctl stop docker.socket" "Stop docker.socket"
-run_sudo_silent "systemctl stop docker" "Stop docker.service"
+run_sudo_silent "systemctl stop docker >/dev/null 2>&1" "Stop docker.service"
+run_sudo_silent "touch /etc/audit/rules.d/docker.rules" "Create auditd docker config"
 set_in_file "## Docker Additional Security\n-w /run/containerd/containerd.sock -k docker\n
 -w /usr/lib/systemd/system/docker.service -k docker\n-w /etc/docker -k docker\n
--w /usr/bin/containerd -k docker\n-w /var/run/docker.sock -k docker\n-w /etc/default/docker -k docker" "/etc/audit/rules.d/audit.rules"
-set_in_file "-w /etc/docker/daemon.json -k docker\n-w /etc/containerd/config.toml -k docker\n-w /etc/sysconfig/docker -k docker\n
--w /usr/bin/containerd-shim-runc-v2 -k docker\n-w /usr/bin/containerd-shim-runc-v1 -k docker\n-w /usr/bin/containerd-shim -k docker\n-w /usr/bin/docker-runc -k docker" "/etc/audit/rules.d/audit.rules"
-run_sudo_silent "dockerd --icc=false" "Disable docker ICC on default bridge"
-run_sudo_silent "dockerd --userns-remap=default" "Enable docker usernamespace"
-
-
+-w /usr/bin/containerd -k docker\n-w /var/run/docker.sock -k docker\n-w /etc/default/docker -k docker
+-w /etc/docker/daemon.json -k docker\n-w /etc/containerd/config.toml -k docker\n-w /etc/sysconfig/docker -k docker\n-w /usr/bin/runc -k docker\n
+-w /usr/bin/containerd-shim-runc-v2 -k docker\n-w /usr/bin/containerd-shim-runc-v1 -k docker\n-w /usr/bin/containerd-shim -k docker\n-w /usr/bin/docker-runc -k docker" "/etc/audit/rules.d/docker.rules"
+done_action "Configure Auditd"
+run_sudo_silent "touch /etc/docker/daemon.json" "Create docker daemon config"
+set_in_file "{\"userns-remap\": \"default\",\"icc\": false,\"no-new-privileges\": true,\"live-restore\": true,\"userland-proxy\": false}" "/etc/docker/daemon.json"
 run_sudo_silent "systemctl start docker.socket" "Start docker.socket"
 run_sudo_silent "systemctl start docker" "Start docker.service"
+run_sudo_silent "pkill -HUP auditd" "Auditd config reload"
+run_sudo_silent "service auditd restart" "Restart Auditd"
