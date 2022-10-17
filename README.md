@@ -1,5 +1,3 @@
-# server_scripts_sw
-`
 # server-hardening.sh
 Wenn das Skript mit dem Argument --rsyslog-server aufgerufen wird, der Server in die Remote-Logging Infrastruktur eingebunden. Dafür ist es notwendig, VORHER ein Zertifikat bei mir zu beantragen.
 Ein solches Zertifikat besteht aus einem Client-Cert und einem Client-Key. Beide Dateinamen müssen dem Skript ordnungsgemäß und mit Dateiendung angegeben werden.
