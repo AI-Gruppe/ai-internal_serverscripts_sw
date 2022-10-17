@@ -11,4 +11,5 @@ sudo ./server-hardening.sh --rsyslog-server 116.203.29.27 --client-key client-ke
 Dieses Skript nimmt sicherheitsrelevante Änderungen an dem Docker Daemon vor. Unter anderem auch das enforcen von User-Namespaces. Wer keine Ahnung hat, was genau das macht aber auch mit dem Bind-Mount auf dem Host <-> Container arbeiten möchte, sollte sich hierzu erstmal belesen. https://docs.docker.com/engine/security/userns-remap/
 
 > Probleme mit VS-Code Remote nach ausführen des Skriptes.
+
 Nach der Ausführung ist die Firewall auf Port 1461 für SSH offen. Ebenso ist in der SSH-Conf die Option **AllowTCPForwarding** auf **no** gesetzt. Diese muss für VS Code auf **yes** geändert werden.
