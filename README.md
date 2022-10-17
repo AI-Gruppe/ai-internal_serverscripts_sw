@@ -1,10 +1,10 @@
 # server-hardening.sh
 **HINWEIS**<br/>
-Vor der Ausführung sollte die Sektion Allgemeines aus https://wiki.gruppe.ai/index.php/Server-Sicherheitskonzept bereits durchgeführt worden sein, da sonst der Port auf 22 default steht, dieser aber von dem Skript und UFW nicht geöffnet wird. Stattdessen wird Port 1461 für SSH geöffnet. Es besteht also die Gefahr, dass der Benutzer nach Ende des Session vom Server ausgesperrt wird.
+Vor der Ausführung sollte die Sektion **Allgemeines und SSH** aus https://wiki.gruppe.ai/index.php/Server-Sicherheitskonzept bereits durchgeführt worden sein, da sonst der Port auf 22 default steht, dieser aber von dem Skript und UFW nicht geöffnet wird. Stattdessen wird Port 1461 für SSH geöffnet. Es besteht also die Gefahr, dass der Benutzer nach Ende der Session von dem Server ausgesperrt wird.<br/><br/>
 **EMPFEHLUNG**<br/>
 Vor des Ausführung es Skriptes ein Backup des Servers machen.<br/>
 Das Skript sollte direkt nach der Aufsetzung des Servers und vor der Softwareinstallation ausgeführt werden.<br/>
-Für Server auf denen bereits eine Vielzahl von Software läuft gibt es **keine Gewähr!!**
+Für Server auf denen bereits eine Vielzahl von Software läuft gibt es **keine Gewähr!!**<br/><br/>
 Wenn das Skript mit dem Argument --rsyslog-server aufgerufen wird, der Server in die Remote-Logging Infrastruktur eingebunden. Dafür ist es notwendig, VORHER ein Zertifikat bei mir zu beantragen.<br/>
 Ein solches Zertifikat besteht aus einem Client-Cert und einem Client-Key. Beide Dateinamen müssen dem Skript ordnungsgemäß und mit Dateiendung angegeben werden.<br/>
 Ebenso muss der Name des CA Zertifikates mit angegeben werden über das Argument --ca-cert. Dieses CA Zertifikat befindet sich hier in diesem Repo.<br/>
