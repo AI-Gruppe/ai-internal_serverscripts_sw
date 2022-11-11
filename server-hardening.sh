@@ -80,6 +80,7 @@ done_action(){
         printf '%-20s %s\n' "$cdone" "$1" 
 }
 
+run_sudo_silent "timedatectl set-timezone Europe/Berlin"
 run_sudo_silent "apt-get -y update" "Update repository"
 ########## DNSSEC ##########
 set_in_file "DNSSEC=yes\nDNSOverTLS=yes" "/etc/systemd/resolved.conf"
