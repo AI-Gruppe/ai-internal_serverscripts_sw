@@ -31,7 +31,7 @@ if ! [ -z ${help+x} ]; then
     echo "  --client-key               Filename of the client keyfile. Same folder as script (mandatory if --rsyslog-server is set)"
     echo "  --client-cert              Filename of the client certfile. Same folder as script (mandatory if --rsyslog-server is set)"
     echo "  --ca-cert                  Filename of the CA certfile. Same folder as script (mandatory if --rsyslog-server is set)"
-    echo "  --log-user                 Username of the user who is allowed to view the logs (mandatory if --rsyslog-server is set)"
+    echo "  --log-user [Username]      Username of the user who is allowed to view the logs (always mandatory)"
     echo "  --web                      Configures the firewall to allow *80 *443 (optional)"
     echo "  -h or --help               help (this output)"
     echo ""
@@ -40,10 +40,10 @@ if ! [ -z ${help+x} ]; then
     exit 0 
 fi
 
-if [ -z ${logclient+x} ]; then
+if [ -z ${locallogs+x} ]; then
     if [ -z ${logserver+x} ]; then
-        echo "No rsyslog config provided"
-        echo "Specify either --rsyslog-client or --rsyslog-server"
+        echo "No rsyslog configuration parameter provided"
+        echo "Specify either --local-logs or --rsyslog-server"
         exit 1
     fi
 fi
