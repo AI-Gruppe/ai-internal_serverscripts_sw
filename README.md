@@ -19,3 +19,12 @@ Dieses Skript nimmt sicherheitsrelevante Änderungen an dem Docker Daemon vor. U
 > Probleme mit VS-Code Remote nach ausführen des Skriptes.
 
 Nach der Ausführung ist die Firewall auf Port 1461 für SSH offen. Ebenso ist in der SSH-Conf die Option **AllowTCPForwarding** auf **no** gesetzt. Diese muss für VS Code auf **yes** geändert werden.
+
+Für den Fall, dass die Datei /etc/docker/daemon.json nicht exitstiert, diese mit dem Besitzer root anlegen und folgenden Inhalt einfügen: 
+{
+"userns-remap": "default",
+"icc": false,
+"no-new-privileges": true,
+"live-restore": true,
+"userland-proxy": false
+}
