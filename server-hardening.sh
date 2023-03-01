@@ -189,7 +189,7 @@ run_sudo_silent "echo 'y' | ufw enable" "Enable firewall"
 run_sudo_silent "service ufw restart" "Restart firewall"
 
 ########## Remote Logs ##########
-if ! [ -z ${locallogs+x} ]; then
+if ! [ -z ${logserver+x} ]; then
     install_if_missing "rsyslog"
     if ! [ -z ${logserver+x} ]; then
         install_if_missing "gnutls-bin"
