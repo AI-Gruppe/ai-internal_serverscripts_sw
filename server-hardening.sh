@@ -107,6 +107,7 @@ set_in_file "###############################################################
 #  Disconnect IMMEDIATELY if you are not an authorized user!  #
 ###############################################################" "/etc/issue"
 run_sudo_silent "cp /etc/issue /etc/issue.net" "Legal banner set"
+run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config
 set_in_file "Banner /etc/issue.net\nAllowTcpForwarding no\nClientAliveCountMax 2\nCompression no\nLogLevel VERBOSE\n
 MaxAuthTries 3\nMaxSessions 2\nTCPKeepAlive no\nX11Forwarding no\nAllowAgentForwarding no\n" "/etc/ssh/sshd_config"
 run_sudo_silent "sed -i '/X11Forwarding/c\X11Forwarding no' /etc/login.defs" "Disable X11Forwarding"
