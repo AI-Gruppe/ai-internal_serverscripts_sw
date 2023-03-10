@@ -26,7 +26,6 @@ done
 if ! [ -z ${help+x} ]; then
     echo "Usage: [--rsyslog-client 0.0.0.0 OR --rsyslog-server + --log-user USERNAME]"
     echo ""
-    echo "  --local-logs               Logs stored only localy (do not provide --rsyslog-server when --local-logs is already set)"
     echo "  --rsyslog-server [IPv4]    Configures the device as a log sending client + Enter the rsyslog-server ipv4 (mandatory)"
     echo "  --client-key               Filename of the client keyfile. Same folder as script (mandatory if --rsyslog-server is set)"
     echo "  --client-cert              Filename of the client certfile. Same folder as script (mandatory if --rsyslog-server is set)"
@@ -190,28 +189,24 @@ run_sudo_silent "echo 'y' | ufw enable" "Enable firewall"
 run_sudo_silent "service ufw restart" "Restart firewall"
 
 ########## Remote Logs ##########
+install_if_missing "rsyslog"
 if ! [ -z ${logserver+x} ]; then
-    install_if_missing "rsyslog"
-    if ! [ -z ${logserver+x} ]; then
-        install_if_missing "gnutls-bin"
-        install_if_missing "rsyslog-gnutls" 
-        run_sudo_silent "mkdir /etc/rsyslog-keys" "Create /etc/rsyslog-keys"
-        run_sudo_silent "mv \$(pwd)/*.pem /etc/rsyslog-keys" "Copy keys"
-        run_sudo_silent "chown -R 0:0 /etc/rsyslog-keys && sudo chmod 700 -R /etc/rsyslog-keys" "Setting root as keys owner"
-    fi
+    install_if_missing "gnutls-bin"
+    install_if_missing "rsyslog-gnutls" 
+    run_sudo_silent "mkdir /etc/rsyslog-keys" "Create /etc/rsyslog-keys"
+    run_sudo_silent "mv \$(pwd)/*.pem /etc/rsyslog-keys" "Copy keys"
+    run_sudo_silent "chown -R 0:0 /etc/rsyslog-keys && sudo chmod 700 -R /etc/rsyslog-keys" "Setting root as keys owner"
     run_sudo_silent "cp /etc/rsyslog.conf /etc/rsyslog_original.config" "Config backup"
     run_sudo_silent "touch /etc/rsyslog.d/laurel.conf" "Create custom config"
-    if ! [ -z ${logserver+x} ]; then
     set_in_file "module(load=\"imfile\")\ninput(type=\"imfile\" File=\"/var/log/laurel/audit*.log\" Tag=\"\" ruleset=\"remote\")\nruleset(name=\"remote\"){\n
     action(type=\"omfwd\" target=\"${logserver}\" port=\"6514\" protocol=\"tcp\"\nStreamDriver=\"gtls\" StreamDriverMode=\"1\" StreamDriverAuthMode=\"anon\")}" "/etc/rsyslog.d/laurel.conf"
     done_action "Configure ${logserver} as logging target"
     set_in_file "\$DefaultNetstreamDriver gtls\n\$DefaultNetstreamDriverCAFile /etc/rsyslog-keys/${cacert}\n\$DefaultNetstreamDriverCertFile /etc/rsyslog-keys/${clientcert}\n
     \$DefaultNetstreamDriverKeyFile /etc/rsyslog-keys/${clientkey}\n\$ActionSendStreamDriverMode 1\n\$ActionSendStreamDriverAuthMode anon" "/etc/rsyslog.conf"
     done_action "Configure rsyslog TLS"
-    fi
-    run_sudo_silent "systemctl enable --now rsyslog" "Enable rsyslog"
-    run_sudo_silent "systemctl restart rsyslog" "Restart rsyslog"
 fi
+run_sudo_silent "systemctl enable --now rsyslog" "Enable rsyslog"
+run_sudo_silent "systemctl restart rsyslog" "Restart rsyslog"
 ########## Final Changes ##########
 install_if_missing "apt-listbugs"
 run_sudo_silent "rm laurel*" "Cleaning up"
