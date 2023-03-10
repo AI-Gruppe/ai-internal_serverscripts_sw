@@ -91,7 +91,7 @@ done_action "Coredumpprevention configuration"
 run_sudo_silent "sysctl -p /etc/sysctl.d/9999-disable-core-dump.conf" "Coredumpprevention applied"
 
 ########## SSH Hardening ##########
-run_sudo_silent "rm /etc/issue && sude rm /etc/issue.net && sudo touch /etc/issue /etc/issue.net" "Set login banner"
+run_sudo_silent "rm /etc/issue && sudo rm /etc/issue.net && sudo touch /etc/issue /etc/issue.net" "Set login banner"
 set_in_file "###############################################################
 #                          Nerd Force1                        #
 #       All connections are monitored and recorded.           #
