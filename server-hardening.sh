@@ -11,7 +11,6 @@ failed="${RED}Installation failed$NC"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h|--help) help="$2"; shift ;;
-        --local-logs) locallogs="$2"; shift ;;
         --rsyslog-server) logserver="$2"; shift ;;
         --client-key) clientkey="$2"; shift ;;
         --client-cert) clientcert="$2"; shift ;;
@@ -39,13 +38,11 @@ if ! [ -z ${help+x} ]; then
     exit 0 
 fi
 
-if [ -z ${locallogs+x} ]; then
-    if [ -z ${logserver+x} ]; then
-        echo "No rsyslog configuration parameter provided"
-        echo "Specify either --local-logs or --rsyslog-server"
-        exit 1
-    fi
+if [ -z ${logserver+x} ]; then
+    echo "No rsyslog configuration parameter provided"
+    exit 1
 fi
+
 
 if [ -z ${loguser+x} ]; then
         echo "No Username for the logs provided"
