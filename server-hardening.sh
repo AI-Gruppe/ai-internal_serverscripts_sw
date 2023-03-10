@@ -38,11 +38,6 @@ if ! [ -z ${help+x} ]; then
     exit 0 
 fi
 
-if [ -z ${logserver+x} ]; then
-    echo "No rsyslog configuration parameter provided"
-    exit 1
-fi
-
 
 if [ -z ${loguser+x} ]; then
         echo "No Username for the logs provided"
