@@ -34,6 +34,7 @@ if ! [ -z ${help+x} ]; then
     echo "  --log-user [Username]      Username of the user who is allowed to view the logs (always mandatory)"
     echo "  --web                      Configures the firewall to allow *80 *443 (optional)"
     echo "  --ssh                      SSH port for ssh service"
+    echo "  --pw-auth                  Preserves the password authentication via SSH"
     echo "  -h or --help               help (this output)"
     echo ""
     echo "Client certificates must be requested from the administrator"
@@ -101,9 +102,10 @@ set_in_file "###############################################################
 #  Disconnect IMMEDIATELY if you are not an authorized user!  #
 ###############################################################" "/etc/issue"
 run_sudo_silent "cp /etc/issue /etc/issue.net" "Legal banner set"
-if  [ -z ${pw+x} ]; then
     run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config"
-    done_action "Disabled Password authentication"
+if ! [ -z ${pw+x} ]; then
+    run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication yes' /etc/ssh/sshd_config"
+    done_action "Enabled Password authentication"
 fi
 set_in_file "Banner /etc/issue.net\nAllowTcpForwarding no\nClientAliveCountMax 2\nCompression no\nLogLevel VERBOSE\n
 MaxAuthTries 3\nMaxSessions 2\nTCPKeepAlive no\nX11Forwarding no\nAllowAgentForwarding no\nPort ${sshport}" "/etc/ssh/sshd_config"
