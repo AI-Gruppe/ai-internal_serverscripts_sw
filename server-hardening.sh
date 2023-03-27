@@ -18,6 +18,7 @@ while [[ "$#" -gt 0 ]]; do
         --log-user) loguser="$2"; shift ;;
         --ssh) sshport="$2"; shift ;;
         --web) webconf="$2"; shift ;;
+        --pw-auth) pw="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -32,6 +33,7 @@ if ! [ -z ${help+x} ]; then
     echo "  --ca-cert                  Filename of the CA certfile. Same folder as script (mandatory if --rsyslog-server is set)"
     echo "  --log-user [Username]      Username of the user who is allowed to view the logs (always mandatory)"
     echo "  --web                      Configures the firewall to allow *80 *443 (optional)"
+    echo "  --ssh                      SSH port for ssh service"
     echo "  -h or --help               help (this output)"
     echo ""
     echo "Client certificates must be requested from the administrator"
@@ -99,7 +101,10 @@ set_in_file "###############################################################
 #  Disconnect IMMEDIATELY if you are not an authorized user!  #
 ###############################################################" "/etc/issue"
 run_sudo_silent "cp /etc/issue /etc/issue.net" "Legal banner set"
-run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config"
+if  [ -z ${pw+x} ]; then
+    run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config"
+    done_action "Disabled Password authentication"
+fi
 set_in_file "Banner /etc/issue.net\nAllowTcpForwarding no\nClientAliveCountMax 2\nCompression no\nLogLevel VERBOSE\n
 MaxAuthTries 3\nMaxSessions 2\nTCPKeepAlive no\nX11Forwarding no\nAllowAgentForwarding no\nPort ${sshport}" "/etc/ssh/sshd_config"
 run_sudo_silent "sed -i '/X11Forwarding/c\X11Forwarding no' /etc/login.defs" "Disable X11Forwarding"
