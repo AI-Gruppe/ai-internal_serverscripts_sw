@@ -11,7 +11,7 @@ Ebenso muss der Name des CA Zertifikates mit angegeben werden über das Argument
 Der --rsyslog-server Befehl nimmt die IPv4 des Targteservers entgegen. Sofern hier nicht anders beschrieben, ist dies die 116.203.29.27.<br/>
 
 Ein Befehl, wie ich ihn beispielsweise einsetze:<br/>
-sudo ./server-hardening.sh --rsyslog-server 116.203.29.27 --client-key client-key.pem --client-cert client-cert.pem --ca-cert nerd_force1_UG_CA.pem --log-user dennisang --web`
+sudo ./server-hardening.sh --rsyslog-server 116.203.29.27 --client-key client-key.pem --client-cert client-cert.pem --ca-cert nerd_force1_UG_CA.pem --log-user dennisang --web yes --pw-auth yes`
 
 # docker-hardening.sh
 Dieses Skript nimmt sicherheitsrelevante Änderungen an dem Docker Daemon vor. Unter anderem auch das enforcen von User-Namespaces. Wer keine Ahnung hat, was genau das macht aber auch mit dem Bind-Mount auf dem Host <-> Container arbeiten möchte, sollte sich hierzu erstmal belesen. https://docs.docker.com/engine/security/userns-remap/
