@@ -16,6 +16,7 @@ while [[ "$#" -gt 0 ]]; do
         --client-cert) clientcert="$2"; shift ;;
         --ca-cert) cacert="$2"; shift ;;
         --log-user) loguser="$2"; shift ;;
+        --ssh) sshport="$2"; shift ;;
         --web) webconf="$2"; shift ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -98,9 +99,9 @@ set_in_file "###############################################################
 #  Disconnect IMMEDIATELY if you are not an authorized user!  #
 ###############################################################" "/etc/issue"
 run_sudo_silent "cp /etc/issue /etc/issue.net" "Legal banner set"
-run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config
+run_sudo_silent "sed -i '/PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config"
 set_in_file "Banner /etc/issue.net\nAllowTcpForwarding no\nClientAliveCountMax 2\nCompression no\nLogLevel VERBOSE\n
-MaxAuthTries 3\nMaxSessions 2\nTCPKeepAlive no\nX11Forwarding no\nAllowAgentForwarding no\n" "/etc/ssh/sshd_config"
+MaxAuthTries 3\nMaxSessions 2\nTCPKeepAlive no\nX11Forwarding no\nAllowAgentForwarding no\nPort ${sshport}" "/etc/ssh/sshd_config"
 run_sudo_silent "sed -i '/X11Forwarding/c\X11Forwarding no' /etc/login.defs" "Disable X11Forwarding"
 done_action "SSH service configuration"
 run_sudo_silent "service ssh restart" "SSH service restart"
@@ -170,7 +171,7 @@ run_sudo_silent "ufw default allow outgoing" "UFW allow outgoing"
 if ! [ -z ${logserver+x} ]; then
     run_sudo_silent "ufw allow 6514/tcp" "Enable 6514/tcp"
 fi
-run_sudo_silent "ufw allow 1461/tcp" "Enable 1461/tcp"
+run_sudo_silent "ufw allow ${sshport}/tcp" "Enable ${sshport}/tcp"
 if ! [ -z ${webconf+x} ]; then
     run_sudo_silent "ufw allow 80/tcp" "Enable 80/tcp"
     run_sudo_silent "ufw allow 443/tcp" "Enable 443/tcp"
@@ -186,12 +187,12 @@ if ! [ -z ${logserver+x} ]; then
     install_if_missing "gnutls-bin"
     install_if_missing "rsyslog-gnutls" 
     run_sudo_silent "mkdir /etc/rsyslog-keys" "Create /etc/rsyslog-keys"
-    run_sudo_silent "mv \$(pwd)/*.pem /etc/rsyslog-keys" "Copy keys"
+    run_sudo_silent "mv \${pwd}/*.pem /etc/rsyslog-keys" "Copy keys"
     run_sudo_silent "chown -R 0:0 /etc/rsyslog-keys && sudo chmod 700 -R /etc/rsyslog-keys" "Setting root as keys owner"
     run_sudo_silent "cp /etc/rsyslog.conf /etc/rsyslog_original.config" "Config backup"
     run_sudo_silent "touch /etc/rsyslog.d/laurel.conf" "Create custom config"
-    set_in_file "module(load=\"imfile\")\ninput(type=\"imfile\" File=\"/var/log/laurel/audit*.log\" Tag=\"\" ruleset=\"remote\")\nruleset(name=\"remote\"){\n
-    action(type=\"omfwd\" target=\"${logserver}\" port=\"6514\" protocol=\"tcp\"\nStreamDriver=\"gtls\" StreamDriverMode=\"1\" StreamDriverAuthMode=\"anon\")}" "/etc/rsyslog.d/laurel.conf"
+    set_in_file "module\(load=\"imfile\"\)\ninput\(type=\"imfile\" File=\"/var/log/laurel/audit*.log\" Tag=\"\" ruleset=\"remote\"\)\nruleset\(name=\"remote\"\){\n
+    action\(type=\"omfwd\" target=\"${logserver}\" port=\"6514\" protocol=\"tcp\"\nStreamDriver=\"gtls\" StreamDriverMode=\"1\" StreamDriverAuthMode=\"anon\"\)}" "/etc/rsyslog.d/laurel.conf"
     done_action "Configure ${logserver} as logging target"
     set_in_file "\$DefaultNetstreamDriver gtls\n\$DefaultNetstreamDriverCAFile /etc/rsyslog-keys/${cacert}\n\$DefaultNetstreamDriverCertFile /etc/rsyslog-keys/${clientcert}\n
     \$DefaultNetstreamDriverKeyFile /etc/rsyslog-keys/${clientkey}\n\$ActionSendStreamDriverMode 1\n\$ActionSendStreamDriverAuthMode anon" "/etc/rsyslog.conf"
@@ -204,9 +205,3 @@ install_if_missing "apt-listbugs"
 run_sudo_silent "rm laurel*" "Cleaning up"
 done_action "Rebooting system now"
 run_sudo_silent "reboot" "Reboot System"
-########## Lynis ##########
-#install_if_missing "apt-transport-https"
-#run_sudo_silent "wget -O - https://packages.cisofy.com/keys/cisofy-software-public.key | sudo apt-key add -" "Get Cisofy PubKey"
-#run_sudo_silent "echo \"deb https://packages.cisofy.com/community/lynis/deb/ stable main\" | sudo tee /etc/apt/sources.list.d/cisofy-lynis.list" "Configure sources.list"
-#run_sudo_silent "apt-get -y update" "Update repository"
-#install_if_missing "lynis"
