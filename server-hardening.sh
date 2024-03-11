@@ -117,6 +117,8 @@ run_sudo_silent "service ssh restart" "SSH service restart"
 run_sudo_silent "chmod o-rx /usr/bin/as"
 
 ########## Software Components ##########
+install_if_missing "cracklib2"
+install_if_missing "cracklib-runtime"
 install_if_missing "libpam-tmpdir"
 install_if_missing "apt-listchanges"
 install_if_missing "needrestart"
